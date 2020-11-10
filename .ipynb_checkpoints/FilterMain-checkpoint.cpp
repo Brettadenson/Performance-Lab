@@ -99,24 +99,21 @@ applyFilter(class Filter *filter, cs1300bmp *input, cs1300bmp *output)
   long long cycStart, cycStop;
 
   cycStart = rdtscll();
-
-  short inputWidth = input -> width-1;
-  output -> width = inputWidth;
-  short inputHeight = input -> height-1;
-  output -> height = inputHeight;
-
+    
   short filterDivisor = filter -> getDivisor(); //code motion from for loop
-  short pixelOutput;
-  int pixelGet[9] = {
-    filter -> get(0,0),filter -> get(0,1),filter -> get(0,2),
-    filter -> get(1,0),filter -> get(1,1),filter -> get(1,2),
-    filter -> get(2,0),filter -> get(2,1),filter -> get(2,2)
-  };
+  short inputHeight = input -> height;
+  short inputWidth = input -> width;
+  output -> height = inputHeight;
+  output -> width = inputWidth;
 
-      for(int plane = 0; plane < 3; plane++) {
-        for(int row = 1; row < (inputHeight); row = row + 1) {
-            for(int col = 1; col < (inputWidth); col = col + 1) {
-              pixelOutput = 0;
+  int pixelGet[9] = {filter -> get(0,0),filter -> get(0,1),filter -> get(0,2),
+                     filter -> get(1,0),filter -> get(1,1),filter -> get(1,2),
+                     filter -> get(2,0),filter -> get(2,1),filter -> get(2,2)};
+
+      for(short plane = 0; plane < 3; plane++) {
+        for(short row = 1; row < inputHeight -1; row = row + 1) {
+            for(short col = 1; col < inputWidth -1; col = col + 1) {
+              short pixelOutput = 0;
               short firstRow = row-1;
               short secondRow = row;
               short thirdRow = row+1;
@@ -132,8 +129,7 @@ applyFilter(class Filter *filter, cs1300bmp *input, cs1300bmp *output)
                 input -> color[plane][secondRow][thirdColumn] * pixelGet[5],
                 input -> color[plane][thirdRow][firstColumn] * pixelGet[6],
                 input -> color[plane][thirdRow][secondColumn] * pixelGet[7],
-                input -> color[plane][thirdRow][thirdColumn] * pixelGet[8],
-              };
+                input -> color[plane][thirdRow][thirdColumn] * pixelGet[8]};
               pixelOutput += inputGrid[0];
               pixelOutput += inputGrid[1];
               pixelOutput += inputGrid[2];
@@ -145,16 +141,12 @@ applyFilter(class Filter *filter, cs1300bmp *input, cs1300bmp *output)
               pixelOutput += inputGrid[8];
 
               pixelOutput = pixelOutput / filterDivisor;
-              pixelOutput = (pixelOutput < 0) ? 0 : pixelOutput;
               pixelOutput = (pixelOutput > 255) ? 255 : pixelOutput;
+              pixelOutput = (pixelOutput < 0) ? 0 : pixelOutput;
               output -> color[plane][row][col] = pixelOutput;
             }
           }
         }
-
-   
-
-
     
   cycStop = rdtscll();
   double diff = cycStop - cycStart;
